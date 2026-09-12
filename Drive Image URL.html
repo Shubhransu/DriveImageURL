@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Google Drive Image URL Generator</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f4f7;
+    margin: 0;
+    padding: 40px;
+}
+
+.container {
+    max-width: 700px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+h2 {
+    margin-top: 0;
+}
+
+label {
+    display: block;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+button {
+    margin-top: 15px;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 6px;
+    background: #1976d2;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #125ca3;
+}
+
+.output {
+    display: none;
+    margin-top: 25px;
+}
+
+.error {
+    color: #d32f2f;
+    margin-top: 15px;
+}
+
+.preview {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.preview img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+textarea {
+    width: 100%;
+    height: 70px;
+    box-sizing: border-box;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: monospace;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Google Drive Image URL Generator</h2>
+
+<p>
+Paste your Google Drive image sharing URL.
+</p>
+
+<label>Google Drive URL</label>
+
+<input
+    type="text"
+    id="driveUrl"
+    placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing"
+>
+
+<button onclick="generateURL()">
+    Generate Image URL
+</button>
+
+<div id="error" class="error"></div>
+
+<div id="output" class="output">
+
+    <label>Extracted Image ID</label>
+
+    <input
+        type="text"
+        id="fileId"
+        readonly
+    >
+
+    <label>Image URL</label>
+
+    <input
+        type="text"
+        id="imageUrl"
+        readonly
+    >
+
+    <button onclick="copyImageURL()">
+        Copy Image URL
+    </button>
+
+    <label>HTML Code</label>
+
+    <textarea id="htmlCode" readonly></textarea>
+
+    <button onclick="copyHTML()">
+        Copy HTML Code
+    </button>
+
+    <div class="preview">
+
+        <h3>Preview</h3>
+
+        <img
+            id="preview"
+            src=""
+            alt="Google Drive Image"
+        >
+
+    </div>
+
+</div>
+
+</div>
+
+
+<script>
+
+function extractDriveID(url) {
+
+    let id = null;
+
+    /*
+    Format:
+    https://drive.google.com/file/d/FILE_ID/view
+    */
+
+    let match = url.match(
+        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/
+    );
+
+    if (match) {
+        id = match[1];
+    }
+
+
+    /*
+    Format:
+    https://drive.google.com/open?id=FILE_ID
+    */
+
+    if (!id) {
+
+        match = url.match(
+            /[?&]id=([a-zA-Z0-9_-]+)/
+        );
+
+        if (match) {
+            id = match[1];
+        }
+
+    }
+
+
+    /*
+    Format:
+    https://drive.google.com/uc?id=FILE_ID
+    */
+
+    if (!id) {
+
+        match = url.match(
+            /drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/
+        );
+
+        if (match) {
+            id = match[1];
+        }
+
+    }
+
+
+    /*
+    Format:
+    https://drive.google.com/thumbnail?id=FILE_ID
+    */
+
+    if (!id) {
+
+        match = url.match(
+            /drive\.google\.com\/thumbnail\?id=([a-zA-Z0-9_-]+)/
+        );
+
+        if (match) {
+            id = match[1];
+        }
+
+    }
+
+    return id;
+}
+
+
+function generateURL() {
+
+    const input =
+        document.getElementById("driveUrl").value.trim();
+
+    const error =
+        document.getElementById("error");
+
+    const output =
+        document.getElementById("output");
+
+    error.textContent = "";
+
+    if (!input) {
+
+        error.textContent =
+            "Please paste a Google Drive URL.";
+
+        output.style.display = "none";
+
+        return;
+    }
+
+
+    const id = extractDriveID(input);
+
+
+    if (!id) {
+
+        error.textContent =
+            "Could not extract the Google Drive file ID.";
+
+        output.style.display = "none";
+
+        return;
+    }
+
+
+    /*
+    Google Drive thumbnail URL
+    */
+
+    const imageURL =
+        "https://drive.google.com/thumbnail?id="
+        + id
+        + "&sz=w2000";
+
+
+    const htmlCode =
+        '<img src="'
+        + imageURL
+        + '" alt="Image">';
+
+
+    document.getElementById("fileId").value =
+        id;
+
+    document.getElementById("imageUrl").value =
+        imageURL;
+
+    document.getElementById("htmlCode").value =
+        htmlCode;
+
+    document.getElementById("preview").src =
+        imageURL;
+
+
+    output.style.display = "block";
+}
+
+
+function copyImageURL() {
+
+    const url =
+        document.getElementById("imageUrl").value;
+
+    navigator.clipboard.writeText(url);
+
+    alert("Image URL copied!");
+}
+
+
+function copyHTML() {
+
+    const code =
+        document.getElementById("htmlCode").value;
+
+    navigator.clipboard.writeText(code);
+
+    alert("HTML code copied!");
+
+}
+
+</script>
+
+</body>
+</html>
